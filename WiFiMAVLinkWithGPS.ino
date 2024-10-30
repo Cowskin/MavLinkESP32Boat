@@ -109,7 +109,7 @@ void receiveMAVLink() {
           //Serial.print(" r=");
           //Serial.println(manualControl.r);
           
-          controlMotors(manualControl.z, manualControl.y);
+          controlMotors(manualControl.z, manualControl.x);
           break;
         case MAVLINK_MSG_ID_COMMAND_LONG: // Check for COMMAND_LONG (ID 76)
           mavlink_command_long_t commandLong;
@@ -163,36 +163,62 @@ void sendCustomResponse(uint8_t commandId) {
     udp.write(buf, len);
     udp.endPacket();
 }
+// Store last values of z and y
+int16_t lastZ = 0;
+int16_t lastX = 0;
 
+// Function to control motors based on z and y values
+void controlMotors(int16_t z, int16_t x) {
+  // Skip the operation if z and y are the same as last values
+  if (z == lastZ && x == lastX) {
+    return;
+  }
+  Serial.print("Current z: ");
+  Serial.print(z);
+  Serial.print(", Current x: ");
+  Serial.println(x);
 
-// Function to control motors based on x and y values
-void controlMotors(int16_t z, int16_t y) {
-  // Map z value to pulse width
-  int pulseZ = map(z, -1000, 1000, minPulse, maxPulse);
-  int pulseY = map(y, -1000, 1000, minPulse, maxPulse);
+  // Map absolute values of z and y to pulse widths
+  int pulseZForward = map(z, 500, 1000, midPulse, maxPulse);   // Forward pulse width
+  int pulseZBackward = map(z, 0, 500, minPulse, midPulse); // Backward pulse width
+  int pulseXForward = map(x, 0, 1000, midPulse, maxPulse);   // Forward pulse width
+  int pulseXBackward = map(x, -1000, 0, minPulse, midPulse); 
 
-   if (z > 0) {
-    Serial.println("left motor move forward");
-    motor1.write(motorPin1, pulseZ);
-  } else if (z < 0) {
-    Serial.println("left motor move backward");
-    motor1.write(motorPin1, pulseZ);
+  // Control left motor
+  if (z > 500) {
+    Serial.print("Pulse for left motor forward: ");
+    Serial.println(pulseZForward);
+    motor1.write(motorPin1, pulseZForward);
+  } else if (z < 500) {
+    Serial.print("Pulse for left motor backward: ");
+    Serial.println(pulseZBackward);
+    motor1.write(motorPin1, pulseZBackward);
   } else {
-    Serial.println("left motor stop");
+    Serial.print("left motor stop: ");
+    Serial.println(midPulse);
     motor1.write(motorPin1, midPulse); // Stop the motor
   }
 
-  if (y > 0) {
-    Serial.println("right motor move forward");
-    motor2.write(motorPin2, pulseY); 
-  } else if (y < 0) {
-    Serial.println("right motor move backward");
-    motor2.write(motorPin2, pulseY);
+  // Control right motor
+  if (x > 0) {
+    Serial.print("Pulse for right motor forward: ");
+    Serial.println(pulseXForward);
+    motor2.write(motorPin2, pulseXForward); 
+  } else if (x < 0) {
+    Serial.print("Pulse for right motor backward: ");
+    Serial.println(pulseXBackward);
+    motor2.write(motorPin2, pulseXBackward);
   } else {
-    Serial.println("right motor stop");
+    Serial.print("right motor stop: ");
+    Serial.println(midPulse);
     motor2.write(motorPin2, midPulse); // Stop the motor
   }
+
+  // Update last values
+  lastZ = z;
+  lastX = x;
 }
+
 
 
 void sendGPSMAVLink() {
@@ -264,26 +290,6 @@ void sendGPSMAVLink() {
     // Serial.println("No data available from GPS.");
   }
 
-
-  
-
-  //delay(1000); // Wait for a second before checking again
-		
-
-      // Generate GPS_RAW_INT message based on parsed data from ATGM336H library
-      // mavlink_msg_gps_raw_int_pack(1, MAV_COMP_ID_AUTOPILOT1, &msg, 
-      //                            micros(),  // Use micros() for timestamp
-      //                            Save_Data.fix_type,  // Assuming fix type is available in library
-      //                            (int32_t)(Save_Data.latitude * 1e7),  // Latitude scaled by 1e7
-      //                            (int32_t)(Save_Data.longitude * 1e7), // Longitude scaled by 1e7
-      //                            Save_Data.altitude,
-      //                            0, 0, 0, // Not used for GPS_RAW_INT
-      //                            Save_Data.satellites);  // Assuming satellites visible is available in library
-      // uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
-      // udp.beginPacket("255.255.255.255", MAVLINK_PORT);
-      // udp.write(buf, len);
-      // udp.endPacket();
-      //Serial.println("Sent GPS data via MAVLink");  
 }
 
 
