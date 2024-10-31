@@ -21,7 +21,7 @@ const unsigned long gpsSendInterval = 1000; // Interval to send GPS data
 // SERVO CONFIGURATIONS
 Servo motor1;
 Servo motor2;
-const int motorPin1 = 12;  // Motor 1 control pin
+const int motorPin1 = 14;  // Motor 1 control pin
 const int motorPin2 = 13;  // Motor 2 control pin
 
 const int minPulse = 70; // 1ms pulse (minimum throttle)
@@ -42,8 +42,8 @@ void setup() {
     motor2.attach(motorPin2);
 
     // Set initial positions to the minimum pulse width (1ms)
-    motor1.write(motorPin1, midPulse);
-    motor2.write(motorPin2, midPulse);
+    motor1.write(midPulse);
+    motor2.write(midPulse);
 }
 
 void loop() {
@@ -188,30 +188,30 @@ void controlMotors(int16_t z, int16_t x) {
   if (z > 500) {
     Serial.print("Pulse for left motor forward: ");
     Serial.println(pulseZForward);
-    motor1.write(motorPin1, pulseZForward);
+    motor1.write(pulseZForward);
   } else if (z < 500) {
     Serial.print("Pulse for left motor backward: ");
     Serial.println(pulseZBackward);
-    motor1.write(motorPin1, pulseZBackward);
+    motor1.write(pulseZBackward);
   } else {
     Serial.print("left motor stop: ");
     Serial.println(midPulse);
-    motor1.write(motorPin1, midPulse); // Stop the motor
+    motor1.write(midPulse); // Stop the motor
   }
 
   // Control right motor
   if (x > 0) {
     Serial.print("Pulse for right motor forward: ");
     Serial.println(pulseXForward);
-    motor2.write(motorPin2, pulseXForward); 
+    motor2.write(pulseXForward); 
   } else if (x < 0) {
     Serial.print("Pulse for right motor backward: ");
     Serial.println(pulseXBackward);
-    motor2.write(motorPin2, pulseXBackward);
+    motor2.write(pulseXBackward);
   } else {
     Serial.print("right motor stop: ");
     Serial.println(midPulse);
-    motor2.write(motorPin2, midPulse); // Stop the motor
+    motor2.write(midPulse); // Stop the motor
   }
 
   // Update last values
