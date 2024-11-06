@@ -6,6 +6,7 @@
 #include <WiFiUdp.h>
 #include <MAVLink.h>
 #include <Servo.h>
+#include "Submarine.hpp"
 
 #define WIFI_SSID "MAVLink"
 #define WIFI_PASSWORD "12345678"
@@ -60,6 +61,8 @@ Parameter parameters[] = {
 };
 
 const int numParameters = sizeof(parameters) / sizeof(parameters[0]);
+
+Submarine submarine(1, 0, 2, 6, 4, 5);
 
 void printBinary(uint16_t value) {
   Serial.print("bX");
@@ -176,7 +179,7 @@ void receiveMAVLink() {
           mavlink_msg_manual_control_decode(&msg, &manualControl);
 
           if (manualControl.buttons != 0 || manualControl.buttons2 != 0) {
-            Serial.print("Received MANUAL_CONTROL:");
+            Serial.print("Received joystick button event:");
             Serial.print(" joystick button(0-15)=");
             printBinary(manualControl.buttons);
             Serial.print(" joystick buttons2(16-31)=");
@@ -185,10 +188,21 @@ void receiveMAVLink() {
 
             // Check if bit 0 is enabled (remember: bit indexing starts from 0)
             if (isBitEnabled(manualControl.buttons, 0)) {
-              Serial.println("Bit 0 in manualControl.buttons(0-15) is enabled.");
-            } else {
-              Serial.println("Bit 0 in manualControl.buttons(0-15) is not enabled.");
-            }
+              Serial.println("Bit 0 in manualControl.buttons(0-15) is enabled. Button (A) is Pressed -- submarine Down");
+              submarine.down();
+            } 
+            else if  (isBitEnabled(manualControl.buttons, 13)) {
+              Serial.println("Bit 13 in manualControl.buttons(0-15) is enabled. Button (Y) is Pressed -- submarine Up");
+              submarine.up();
+            } 
+            else if  (isBitEnabled(manualControl.buttons, 3)) {
+              Serial.println("Bit 3 in manualControl.buttons(0-15) is enabled. Button (LB-Left Bumper) is Pressed -- submarine Claw Open");
+              submarine.clawOpen();
+            } 
+            else if  (isBitEnabled(manualControl.buttons, 5)) {
+              Serial.println("Bit 5 in manualControl.buttons(0-15) is enabled. Button (RB-Right Bumper) is Pressed -- submarine Claw Close");
+              submarine.clawClose();
+            } 
           }
 
           // Print only non-zero values for s, t, aux1, aux2, aux3, aux4, aux5, aux6
