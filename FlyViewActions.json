@@ -1,0 +1,35 @@
+{
+  "version":    1,
+  "fileType":   "CustomActions",
+  "actions":
+  [
+  {
+    "label":        "move1",
+    "description":  "MOVE action 1",
+    "mavCmd":       183,
+    "param1":       5,
+    "param2":       1900
+  },
+  {
+    "label":        "move2",
+    "description":  "Move action 2",
+    "mavCmd":       183,
+    "param1":       5,
+    "param2":       1000
+  },
+  {
+    "label":        "move3",
+    "description":  "Move action 3",
+    "mavCmd":       181,
+    "param1":       0,
+    "param2":       1
+  },
+  {
+    "label":        "move4",
+    "description":  "Move action 4",
+    "mavCmd":       181,
+    "param1":       0,
+    "param2":       0
+  }
+  ]
+}
