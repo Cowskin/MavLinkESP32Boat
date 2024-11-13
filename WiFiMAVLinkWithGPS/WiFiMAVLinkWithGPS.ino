@@ -20,7 +20,7 @@ const unsigned long gpsSendInterval = 1000;  // Interval to send GPS data
 
 // Track MAVLink heartbeat status
 unsigned long lastHeartbeatTime = 0;
-const unsigned long heartbeatTimeout = 3000;  // 3 seconds
+const unsigned long heartbeatTimeout = 4000;  // 4 seconds
 
 // Parameter structure definition
 struct Parameter {
@@ -52,17 +52,40 @@ int com_rc_in_mode = 1;
 int16_t lastZ = 0;
 int16_t lastX = 0;
 
+
+// Submarine  Define the pin numbers
+int power1APin = 22;
+int power1BPin = 23;
+int switch1APin = 19;
+int switch1BPin = 21;
+int power2APin = 32;
+int power2BPin = 33;
+int switch2APin = 25;
+int switch2BPin = 26;
+
+Submarine submarine(power1APin, power1BPin, switch1APin, switch1BPin, power2APin, power2BPin, switch2APin, switch2BPin);
+
 Parameter parameters[] = {
   { "COM_RC_IN_MODE", &com_rc_in_mode, 1},
   { "MOTOR_min", &minPulse, defaultMinPulse },
   { "MOTOR_mid", &midPulse, defaultMidPulse },
   { "MOTOR_l_max", &left_maxPulse, defaultMaxPulse },
-  { "MOTOR_r_max", &right_maxPulse, defaultMaxPulse }
+  { "MOTOR_r_max", &right_maxPulse, defaultMaxPulse },
+
+  // allow config pin for the submarine
+  //{ "PIN_POWER_1", &power1Pin, 1 },
+  //{ "PIN_SWITCH_1A", &switch1APin, 0 },
+  //{ "PIN_SWITCH_1B", &switch1BPin, 2 }
+  //{ "PIN_POWER_2", &power2Pin, 35 },
+  //{ "PIN_SWITCH_2A", &switch2APin, 32 },
+  //{ "PIN_SWITCH_2B", &switch2BPin, 34 }
 };
 
 const int numParameters = sizeof(parameters) / sizeof(parameters[0]);
 
-Submarine submarine(1, 0, 2, 6, 4, 5);
+
+
+mavlink_manual_control_t last_manualControl;
 
 void printBinary(uint16_t value) {
   Serial.print("bX");
@@ -95,6 +118,8 @@ void setup() {
   // Set initial positions to the minimum pulse width (1ms)
   motor1.write(midPulse);
   motor2.write(midPulse);
+
+  submarine.setup();
 }
 
 void loadParametersFromPreferences() {
@@ -176,9 +201,10 @@ void receiveMAVLink() {
         case MAVLINK_MSG_ID_MANUAL_CONTROL:
           // Can be used to control the vehicle
           mavlink_manual_control_t manualControl;
+          
           mavlink_msg_manual_control_decode(&msg, &manualControl);
-
-          if (manualControl.buttons != 0 || manualControl.buttons2 != 0) {
+          if ((manualControl.buttons != 0 && last_manualControl.buttons !=  manualControl.buttons)
+            || (manualControl.buttons2 != 0 && last_manualControl.buttons2 !=  manualControl.buttons2)) {
             Serial.print("Received joystick button event:");
             Serial.print(" joystick button(0-15)=");
             printBinary(manualControl.buttons);
@@ -189,11 +215,11 @@ void receiveMAVLink() {
             // Check if bit 0 is enabled (remember: bit indexing starts from 0)
             if (isBitEnabled(manualControl.buttons, 0)) {
               Serial.println("Bit 0 in manualControl.buttons(0-15) is enabled. Button (A) is Pressed -- submarine Down");
-              submarine.down();
+              submarine.up();
             } 
             else if  (isBitEnabled(manualControl.buttons, 13)) {
               Serial.println("Bit 13 in manualControl.buttons(0-15) is enabled. Button (Y) is Pressed -- submarine Up");
-              submarine.up();
+              submarine.down();
             } 
             else if  (isBitEnabled(manualControl.buttons, 3)) {
               Serial.println("Bit 3 in manualControl.buttons(0-15) is enabled. Button (LB-Left Bumper) is Pressed -- submarine Claw Open");
@@ -240,6 +266,7 @@ void receiveMAVLink() {
           }
           // handle x y z r
           controlMotors(manualControl.z, manualControl.x);
+          last_manualControl = manualControl;
           break;
         case MAVLINK_MSG_ID_COMMAND_LONG:  // Check for COMMAND_LONG (ID 76)
           mavlink_command_long_t commandLong;
@@ -559,11 +586,6 @@ void displayInfo() {
 
 void resetToFactoryDefaults() {
   // Reset parameters to their default values
-  minPulse = defaultMinPulse;
-  midPulse = defaultMidPulse;
-  left_maxPulse = defaultMaxPulse;
-  right_maxPulse = defaultMaxPulse;
-
   for (int i = 0; i < sizeof(parameters) / sizeof(Parameter); ++i) {
     *(parameters[i].value) = parameters[i].defaultValue;
     preferences.putInt(parameters[i].name, parameters[i].defaultValue);

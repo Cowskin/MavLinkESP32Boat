@@ -6,23 +6,12 @@
 class Submarine
 {
 public:
-    Submarine(int power1Pin, int switch1APin, int switch1BPin, int power2Pin, int switch2APin, int switch2BPin);
-    
+    Submarine(int power1APin, int power1BPin, int switch1APin, int switch1BPin, int power2APin, int power2BPin, int switch2APin, int switch2BPin);
     void setup();
     void clawClose();
     void clawOpen();
     void up();
     void down(); 
-
-private:
-    int POWER_1;
-    int SWITCH_1A;
-    int SWITCH_1B;
-    int POWER_2;
-    int SWITCH_2A;
-    int SWITCH_2B;
-    
-    void powerSetup();
 
     void powerOn(int num);
     void powerOff(int num);
@@ -30,6 +19,20 @@ private:
     void switchOff();
     void switchOn2();
     void switchOff2();
+
+private:
+    int POWER_1A;
+    int POWER_1B;
+    int SWITCH_1A;
+    int SWITCH_1B;
+    int POWER_2A;
+    int POWER_2B;
+    int SWITCH_2A;
+    int SWITCH_2B;
+    
+    void powerSetup();
+
+    
 };
 
 #endif
